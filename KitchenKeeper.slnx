@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="KitchenKeeper.Tests/KitchenKeeper.UnitTests.csproj" />
+  <Project Path="KitchenKeeper/KitchenKeeper.csproj" />
+</Solution>
