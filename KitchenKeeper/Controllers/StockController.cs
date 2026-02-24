@@ -1,3 +1,4 @@
+using KitchenKeeper.BAL.ShoppingListRefinement_BAL;
 using KitchenKeeper.BAL.Stock_BAL;
 using KitchenKeeper.Classes;
 using Microsoft.AspNetCore.Mvc;
@@ -82,21 +83,6 @@ namespace KitchenKeeper.Controllers
             {
                 int rows = await _stockService.DeleteFood(id);
                 return rows > 0 ? Ok(rows) : NotFound();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
-        }
-
-        [HttpGet(Name = "GenerateShoppingListFromRecipe")]
-        public async Task<IActionResult> GenerateShoppingListFromRecipe(Recipe recipe)
-        {
-            try
-            {
-                var result = await _stockService.GenerateShoppingListFromRecipe(recipe);
-                return Ok(result);
             }
             catch (Exception ex)
             {

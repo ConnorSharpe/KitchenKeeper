@@ -2,53 +2,18 @@
 using KitchenKeeper.DAL.DTO;
 using KitchenKeeper.DAL.Stock_SQL;
 using KitchenKeeper.Models;
-using System;
 using System.Data;
 using System.Linq;
 
-namespace KitchenKeeper.BAL.Stock_BAL
+namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
 {
-    public class StockService : IStockService
+    public class ShoppingListRefinerService : IShoppingListRefinerService
     {
         private readonly IStock_SQL _stock_SQL;
 
-        public StockService(IStock_SQL stock_SQL)
+        public ShoppingListRefinerService(IStock_SQL stock_SQL)
         {
             _stock_SQL = stock_SQL;
-        }
-
-        public async Task<int> AddFood(FoodBase food)
-        {
-            Food_DTO food_DTO = Model_Mapper.ConvertFoodToDTO(food);
-            return await _stock_SQL.AddFood(food_DTO);
-        }
-
-        public async Task<FoodBase> GetFoodById(int id)
-        {
-            Food_DTO? food_DTO = await _stock_SQL.GetFoodById(id);
-            CheckDTOForNull(food_DTO);
-            return Model_Mapper.ConvertDTOToFood(food_DTO);
-        }
-
-        public async Task<IEnumerable<FoodBase>> SearchInventoryByName(string name)
-        {
-            IEnumerable<Food_DTO> foodDTOs = await _stock_SQL.SearchInventoryByName(name);
-            return Model_Mapper.ConvertDTOListToFoodList(foodDTOs);
-        }
-
-        public async Task<int> UpdateFood(FoodBase food)
-        {
-            CheckIdForValue(food.ID);
-
-            Food_DTO food_DTO = Model_Mapper.ConvertFoodToDTO(food);
-            return await _stock_SQL.UpdateFood(food_DTO);
-        }
-
-        public async Task<int> DeleteFood(int id)
-        {
-            CheckIdForValue(id);
-
-            return await _stock_SQL.DeleteFood(id);
         }
 
         public async Task<ShoppingList> GenerateShoppingListFromRecipe(Recipe recipe)
@@ -65,33 +30,28 @@ namespace KitchenKeeper.BAL.Stock_BAL
             return shoppingList;
         }
 
-        private static void FilterIngredientsNotInStock(ShoppingList shoppingList)
-        {
-            if (shoppingList == null) return;
-
-            var toBuy = shoppingList.IngredientsToBuy;
-            var inStock = shoppingList.IngredientsInStock;
-
-            if (toBuy == null || toBuy.Count == 0) return;
-            if (inStock == null || inStock.Count == 0) return;
-
-            // Build a lookup of names in stock for fast comparison (case-insensitive)
-            var inStockNames = new HashSet<string>(inStock.Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
-
-            // Remove any ingredient to buy that has a matching name in stock
-            toBuy.RemoveAll(i => inStockNames.Contains(i.Name));
-
-            shoppingList.IsReadyToCook = (shoppingList.IngredientsToBuy?.Count ?? 0) == 0;
-
-        }
-
         private async Task<List<FoodBase>> GetFoodByIngredients(List<Ingredient> ingredients)
         {
-            List<string> ingredientNames = ExtractIngredientNamesToList(ingredients);
-            DataTable ingredientNameDT = GenerateIngredientNameDataTable(ingredientNames);
+            DataTable ingredientNameDT = GenerateDataTableFromIngredientNames(ingredients);
             IEnumerable<Food_DTO> unrefinedFoods = await _stock_SQL.GetFoodByIngredientNameDT(ingredientNameDT);
             List<FoodBase> unrefinedFoodList = Model_Mapper.ConvertDTOListToFoodList(unrefinedFoods).ToList();
             return RefineFoodInStock(unrefinedFoodList);
+        }
+
+        private DataTable GenerateDataTableFromIngredientNames(List<Ingredient> ingredients)
+        {
+            List<string> ingredientNames = ExtractIngredientNamesToList(ingredients);
+            return GenerateIngredientNameDataTable(ingredientNames);
+        }
+
+        private List<string> ExtractIngredientNamesToList(List<Ingredient> ingredients)
+        {
+            List<string> ingredientNames = new List<string>();
+            foreach (var ingredient in ingredients)
+            {
+                ingredientNames.Add(ingredient.Name);
+            }
+            return ingredientNames;
         }
 
         private DataTable GenerateIngredientNameDataTable(List<string> ingredientNames)
@@ -105,16 +65,32 @@ namespace KitchenKeeper.BAL.Stock_BAL
             return ingredientNameDT;
         }
 
-        private List<string> ExtractIngredientNamesToList(List<Ingredient> ingredients)
+        private static void FilterIngredientsNotInStock(ShoppingList shoppingList)
         {
-            List<string> ingredientNames = new List<string>();
-            foreach (var ingredient in ingredients)
-            {
-                ingredientNames.Add(ingredient.Name);
-            }
-            return ingredientNames;
-        }
+            if (shoppingList?.IngredientsInStock == null || shoppingList.IngredientsInStock.Count == 0) return;
+            if (shoppingList.IngredientsToBuy == null || shoppingList.IngredientsToBuy.Count == 0) return;
 
+            foreach (var stockFood in shoppingList.IngredientsInStock)
+            {
+                var matching = shoppingList.IngredientsToBuy
+                    .FirstOrDefault(i => string.Equals(i.Name, stockFood.Name, StringComparison.OrdinalIgnoreCase));
+                if (matching == null) continue;
+
+                if (stockFood.Quantity >= matching.Quantity)
+                {
+                    // stock covers required amount: set stock quantity to the needed amount and remove ingredient to buy
+                    stockFood.Quantity = matching.Quantity;
+                    shoppingList.IngredientsToBuy.Remove(matching);
+                }
+                else
+                {
+                    // stock partially covers requirement: subtract stock from amount to buy
+                    matching.Quantity -= stockFood.Quantity;
+                }
+            }
+
+            shoppingList.IsReadyToCook = (shoppingList.IngredientsToBuy?.Count ?? 0) == 0;
+        }
 
         private List<FoodBase> RefineFoodInStock(List<FoodBase> unrefinedFoodsInStock)
         {
@@ -122,17 +98,15 @@ namespace KitchenKeeper.BAL.Stock_BAL
             //extract distinct and add to refined foods 
             List<FoodBase> refinedFoodsInStock = ExtractDistinctFoodToList(unrefinedFoodsInStock);
             //remove foods from original list if they are in the refined list,
-            foreach(var food in refinedFoodsInStock)
+            foreach (var food in refinedFoodsInStock)
             {
                 unrefinedFoodsInStock.RemoveAll(f => f.Name == food.Name);
             }
 
             //Add the quantities of the duplicate food if there are still values in the unrefined list and add them to the refined
-            if(unrefinedFoodsInStock.Count != 0)
+            if (unrefinedFoodsInStock.Count != 0)
             {
                 CombineDuplicateFood(unrefinedFoodsInStock);
-
-                //TODO: Check distinct
                 refinedFoodsInStock.AddRange(unrefinedFoodsInStock);
             }
 
@@ -140,11 +114,22 @@ namespace KitchenKeeper.BAL.Stock_BAL
 
         }
 
-        public static void CombineDuplicateFood(List<FoodBase> foods)
+        private List<FoodBase> ExtractDistinctFoodToList(List<FoodBase> unrefinedFoodsInStock)
         {
-            var groups = foods
+            // Return only those foods whose names appear exactly once (case-insensitive)
+            var distinctOnly = unrefinedFoodsInStock
                 .GroupBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
+                .Where(g => g.Count() == 1)
+                .Select(g => g.First())
                 .ToList();
+
+            return distinctOnly;
+        }
+
+
+        private static void CombineDuplicateFood(List<FoodBase> foods)
+        {
+            var groups = GroupFoodsByName(foods);
 
             foreach (var group in groups)
             {
@@ -171,25 +156,12 @@ namespace KitchenKeeper.BAL.Stock_BAL
             }
         }
 
-
-        private List<FoodBase> ExtractDistinctFoodToList(List<FoodBase> unrefinedFoodsInStock)
+        private static List<IGrouping<string, FoodBase>> GroupFoodsByName(List<FoodBase> foods)
         {
-            List<FoodBase> distinctFood = unrefinedFoodsInStock.DistinctBy(f => new { f.Name }).ToList();
-            return distinctFood;
+            return foods
+                .GroupBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
-
-
-        private void CheckIdForValue(int? id)
-        {
-            if (id is null or 0)
-                throw new Exception("Invalid Food Id");
-        }
-
-        private void CheckDTOForNull(Food_DTO? dto)
-        {
-            if (dto is null)
-                throw new Exception("Food not Found");
-        }
     }
 }

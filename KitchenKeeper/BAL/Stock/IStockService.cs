@@ -12,6 +12,5 @@ namespace KitchenKeeper.BAL.Stock_BAL
         Task<FoodBase> GetFoodById(int id);
         Task<int> DeleteFood(int id);
         Task<int> UpdateFood(FoodBase food);
-        Task<ShoppingList> GenerateShoppingListFromRecipe(Recipe recipe);
     }
 }

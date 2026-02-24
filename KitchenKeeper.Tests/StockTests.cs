@@ -58,50 +58,7 @@ namespace KitchenKeeper.UnitTests
             };
         }
 
-        private Recipe CreateTestRecipe()
-        {
-            return new Recipe()
-            {
-                ID = 1,
-                Name = "Test Recipe",
-                Ingredients = new List<Ingredient>() 
-                { 
-                    new Ingredient()
-                    {
-                        ID = 1,
-                        Name = "Onion",
-                        RecipeID = 1,
-                        Quantity = 1,
-                        UnitOfMeasurement = QuantityType.count
-                    },
-                    new Ingredient()
-                    {
-                        ID = 2,
-                        Name = "Beef",
-                        RecipeID = 1,
-                        Quantity = 16,
-                        UnitOfMeasurement = QuantityType.oz
-                    },
-                    new Ingredient()
-                    {
-                        ID = 3,
-                        Name = "Stock",
-                        RecipeID = 1,
-                        Quantity = 12,
-                        UnitOfMeasurement = QuantityType.fl_oz
-                    },
-                    new Ingredient()
-                    {
-                        ID = 4,
-                        Name = "Salt",
-                        RecipeID = 1,
-                        Quantity = 2,
-                        UnitOfMeasurement = QuantityType.gram
-                    },
-                },
-                Instructions = new List<Instruction>(),
-            };
-        }
+        
 
         #endregion
 
@@ -277,26 +234,5 @@ namespace KitchenKeeper.UnitTests
             stockSqlMock.Verify(s => s.DeleteFood(123), Times.Once);
         }
         #endregion
-
-        #region ShoppingList
-
-        [Fact]
-        public async Task GenerateShoppingListAsync()
-        {
-            // Arrange
-            Recipe testRecipe = CreateTestRecipe();
-
-            var stockSqlMock = new Mock<IStock_SQL>();
-            //TODO: SetUp return objects
-            //stockSqlMock.Setups()
-            var stockController = SetUpStockController(stockSqlMock);
-            // Act
-             IActionResult result = await stockController.GenerateShoppingListFromRecipe(testRecipe);
-            // Assert
-             Assert.IsType<OkObjectResult>(result);
-        }
-
-        #endregion
-
     }
 }
