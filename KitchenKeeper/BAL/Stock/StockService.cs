@@ -2,9 +2,6 @@
 using KitchenKeeper.DAL.DTO;
 using KitchenKeeper.DAL.Stock_SQL;
 using KitchenKeeper.Models;
-using System;
-using System.Data;
-using System.Linq;
 
 namespace KitchenKeeper.BAL.Stock_BAL
 {

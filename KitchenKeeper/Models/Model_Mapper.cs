@@ -1,5 +1,6 @@
 ﻿using KitchenKeeper.Classes;
 using KitchenKeeper.DAL.DTO;
+using System.Data;
 
 namespace KitchenKeeper.Models
 {
@@ -71,6 +72,45 @@ namespace KitchenKeeper.Models
                 IsVegetarian = food_DTO.IsVegetarian
             };
             return food;
+        }
+
+        public static Recipe_DTO ConvertRecipeToDTO(Recipe recipe)
+        {
+            return new Recipe_DTO
+            {
+                RecipeDetails = new Recipe_Details_DTO
+                {
+                    ID = recipe.ID,
+                    Name = recipe.Name
+                },
+                IngredientsDT = ConvertIngredientsToDataTable(recipe.Ingredients),
+                InstructionsDT = ConvertInstructionsToDataTable(recipe.Instructions)
+            };
+        }
+
+        public static DataTable ConvertIngredientsToDataTable(List<Ingredient> ingredients)
+        {
+            DataTable ingredientDT = new DataTable();
+            ingredientDT.Columns.Add("Name", typeof(string));
+            ingredientDT.Columns.Add("Quantity", typeof(double));
+            ingredientDT.Columns.Add("UnitOfMeasurement", typeof(string));
+            foreach (var ingredient in ingredients)
+            {
+                ingredientDT.Rows.Add(ingredient.Name, ingredient.Quantity, ingredient.UnitOfMeasurement.ToString());
+            }
+            return ingredientDT;
+        }
+
+        public static DataTable ConvertInstructionsToDataTable(List<Instruction> instructions)
+        {
+            DataTable instructionDT = new DataTable();
+            instructionDT.Columns.Add("Order", typeof(int));
+            instructionDT.Columns.Add("Content", typeof(string));
+            foreach (var instruction in instructions)
+            {
+                instructionDT.Rows.Add(instruction.Order, instruction.Content);
+            }
+            return instructionDT;
         }
     }
 }
