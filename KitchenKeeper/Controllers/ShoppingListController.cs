@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KitchenKeeper.Controllers
 {
-    public class ShoppingListController : Controller
+    [ApiController]
+    [Route("[controller]")]
+    public class ShoppingListController : ControllerBase
     {
         private readonly IShoppingListRefinerService _shoppingListRefinerService;
 
