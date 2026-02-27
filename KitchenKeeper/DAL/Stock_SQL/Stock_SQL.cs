@@ -1,5 +1,4 @@
 ﻿using Dapper;
-using KitchenKeeper.Classes;
 using KitchenKeeper.DAL.DTO;
 using System.Data;
 
@@ -15,10 +14,7 @@ namespace KitchenKeeper.DAL.Stock_SQL
         private const string FOOD_GET_EXPIRING = "dbo.FOOD_GET_EXPIRING";
         private const string FOOD_SEARCH_BY_NAME = "dbo.FOOD_SEARCH_BY_NAME";
         private const string FOOD_UPDATE = "dbo.FOOD_UPDATE";
-        private const string INGREDIENT_UPDATE = "dbo.INGREDIENT_UPDATE";
-        private const string INSTRUCTION_UPDATE = "dbo.INSTRUCTION_UPDATE";
-        private const string RECIPE_ADD = "dbo.RECIPE_ADD";
-        private const string RECIPE_DELETE = "dbo.RECIPE_DELETE";
+
         #endregion
 
         private readonly IDbConnection _db;
@@ -49,7 +45,7 @@ namespace KitchenKeeper.DAL.Stock_SQL
         public async Task<int> AddFood(Food_DTO food)
         {
             return await _db.ExecuteScalarAsync<int>(
-                RECIPE_ADD, 
+                FOOD_ADD, 
                 food, 
                 commandType: CommandType.StoredProcedure
                 );
@@ -85,41 +81,6 @@ namespace KitchenKeeper.DAL.Stock_SQL
 
     }
 }
-
-
-
-
-//ADD FULL RECIPE CODE
-//var ingredients = new DataTable();
-//ingredients.Columns.Add("Name", typeof(string));
-//ingredients.Columns.Add("Quantity", typeof(double));
-//ingredients.Columns.Add("UnitOfMeasurement", typeof(string));
-
-//foreach (var ing in recipe.Ingredients)
-//{
-//    ingredients.Rows.Add(ing.Name, ing.Quantity, ing.UnitOfMeasurement);
-//}
-
-//var instructions = new DataTable();
-//instructions.Columns.Add("Order", typeof(int));
-//instructions.Columns.Add("Content", typeof(string));
-
-//foreach (var ins in recipe.Instructions)
-//{
-//    instructions.Rows.Add(ins.Order, ins.Content);
-//}
-
-
-//using var cmd = new SqlCommand(RECIPE_ADD, connection);
-//cmd.CommandType = CommandType.StoredProcedure;
-
-//cmd.Parameters.AddWithValue("@Name", recipe.Name);
-//cmd.Parameters.AddWithValue("@Ingredients", ingredients);
-//cmd.Parameters.AddWithValue("@Instructions", instructions);
-
-//cmd.ExecuteNonQuery();
-
-
 
 // Using Dapper to call a stored procedure that accepts a table-valued parameter
 // (create a user-defined table type in SQL Server, e.g. dbo.StringList with a single nvarchar column named Value)
