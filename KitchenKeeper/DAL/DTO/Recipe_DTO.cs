@@ -24,7 +24,7 @@ namespace KitchenKeeper.DAL.DTO
         public required string UnitOfMeasurement { get; set; }
     }
 
-    public class Instructions_DTO
+    public class Instruction_DTO
     {
         public int ID { get; set; }
         public int RecipeID { get; set; }

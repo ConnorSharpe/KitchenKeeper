@@ -1,6 +1,4 @@
-﻿using KitchenKeeper.Classes;
-
-namespace KitchenKeeper.DAL.DTO
+﻿namespace KitchenKeeper.DAL.DTO
 {
     public class Food_DTO
     {
