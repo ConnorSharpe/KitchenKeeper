@@ -53,7 +53,7 @@ namespace KitchenKeeper.BAL.RecipeManager
 
         public async Task<IEnumerable<Recipe>> SearchRecipesByIngredients(List<string> ingredientNames)
         {
-            IEnumerable<Recipe_DTO> recipeDTOs = await _recipe_SQL.SearchRecipesByIngredientNames(ingredientNames);
+            IEnumerable<Recipe_DTO> recipeDTOs = await _recipe_SQL.SearchRecipesByIngredients(ingredientNames);
             IEnumerable<Recipe> recipes = Model_Mapper.ConvertDTOListToRecipeList(recipeDTOs);
             return recipes;
         }

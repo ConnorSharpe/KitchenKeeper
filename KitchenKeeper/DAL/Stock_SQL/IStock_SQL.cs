@@ -1,6 +1,4 @@
-﻿using KitchenKeeper.Classes;
-using KitchenKeeper.DAL.DTO;
-using Microsoft.AspNetCore.Mvc;
+﻿using KitchenKeeper.DAL.DTO;
 using System.Data;
 
 namespace KitchenKeeper.DAL.Stock_SQL
