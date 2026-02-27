@@ -112,5 +112,103 @@ namespace KitchenKeeper.Models
             }
             return instructionDT;
         }
+
+        public static Ingredient_DTO ConvertIngredientToDTO(Ingredient ingredient)
+        {
+            return new Ingredient_DTO
+            {
+                ID = ingredient.ID,
+                Name = ingredient.Name,
+                RecipeID = ingredient.RecipeID,
+                Quantity = ingredient.Quantity,
+                UnitOfMeasurement = ingredient.UnitOfMeasurement.ToString()
+            };
+        }
+
+        public static Instruction_DTO ConvertInstructionToDTO(Instruction instruction)
+        {
+            return new Instruction_DTO
+            {
+                ID = instruction.ID,
+                RecipeID = instruction.RecipeID,
+                Order = instruction.Order,
+                Content = instruction.Content,
+            };
+        }
+
+        public static IEnumerable<Recipe> ConvertDTOListToRecipeList(IEnumerable<Recipe_DTO> dtoList)
+        {
+            List<Recipe> recipeList = new List<Recipe>();
+            foreach (var dto in dtoList)
+            {
+                recipeList.Add(ConvertDTOToRecipe(dto));
+            }
+            return recipeList;
+        }
+
+        public static Recipe ConvertDTOToRecipe(Recipe_DTO recipe_DTO)
+        {
+            return new Recipe
+            {
+                ID = recipe_DTO.RecipeDetails.ID,
+                Name = recipe_DTO.RecipeDetails.Name,
+                Ingredients = ConvertDTOToIngredientList(recipe_DTO.IngredientsDT),
+                Instructions = ConvertDTOToInstructionList(recipe_DTO.InstructionsDT)
+            };
+        }
+
+        public static List<Ingredient> ConvertDTOToIngredientList(DataTable ingredientDT)
+        {
+            List<Ingredient> ingredients = new List<Ingredient>();
+            foreach (DataRow row in ingredientDT.Rows)
+            {
+                Ingredient ingredient = new Ingredient
+                {
+                    Name = row["Name"].ToString(),
+                    Quantity = Convert.ToDouble(row["Quantity"]),
+                    UnitOfMeasurement = Enum.Parse<QuantityType>(row["UnitOfMeasurement"].ToString())
+                };
+                ingredients.Add(ingredient);
+            }
+            return ingredients;
+        }
+
+        public static Ingredient ConvertIngredientDataRowToIngredient(DataRow ingredientRow)
+        {
+            return new Ingredient
+            {
+                ID = Convert.ToInt32(ingredientRow["ID"]),
+                Name = ingredientRow["Name"].ToString(),
+                RecipeID = Convert.ToInt32(ingredientRow["RecipeID"]),
+                Quantity = Convert.ToDouble(ingredientRow["Quantity"]),
+                UnitOfMeasurement = Enum.Parse<QuantityType>(ingredientRow["UnitOfMeasurement"].ToString())
+            };
+        }
+
+        public static List<Instruction> ConvertDTOToInstructionList(DataTable instructionDT)
+        {
+            List<Instruction> instructions = new List<Instruction>();
+            foreach (DataRow row in instructionDT.Rows)
+            {
+                Instruction instruction = new Instruction
+                {
+                    Order = Convert.ToInt32(row["Order"]),
+                    Content = row["Content"].ToString()
+                };
+                instructions.Add(instruction);
+            }
+            return instructions;
+        }
+
+        public static Instruction ConvertInstructionDataRowToInstruction(DataRow instructionRow)
+        {
+            return new Instruction
+            {
+                ID = Convert.ToInt32(instructionRow["ID"]),
+                RecipeID = Convert.ToInt32(instructionRow["RecipeID"]),
+                Order = Convert.ToInt32(instructionRow["Order"]),
+                Content = instructionRow["Content"].ToString()
+            };
+        }
     }
 }

@@ -1,4 +1,3 @@
-using KitchenKeeper.BAL.ShoppingListRefinement_BAL;
 using KitchenKeeper.BAL.Stock_BAL;
 using KitchenKeeper.Classes;
 using Microsoft.AspNetCore.Mvc;
@@ -66,8 +65,8 @@ namespace KitchenKeeper.Controllers
         {
             try
             {
-                int rows = await _stockService.UpdateFood(food);
-                return rows > 0 ? Ok(rows) : NotFound();
+                int result = await _stockService.UpdateFood(food);
+                return result > 0 ? Ok(result) : NotFound();
             }
             catch (Exception ex)
             {
@@ -81,8 +80,8 @@ namespace KitchenKeeper.Controllers
         {
             try
             {
-                int rows = await _stockService.DeleteFood(id);
-                return rows > 0 ? Ok(rows) : NotFound();
+                int result = await _stockService.DeleteFood(id);
+                return result > 0 ? Ok(result) : NotFound();
             }
             catch (Exception ex)
             {

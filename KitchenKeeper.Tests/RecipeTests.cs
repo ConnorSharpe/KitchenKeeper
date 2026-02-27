@@ -97,5 +97,62 @@ namespace KitchenKeeper.UnitTests
             Assert.Equal(testRecipe.ID, ((OkObjectResult)result).Value);
             recipeSQLMock.Verify(m => m.AddRecipe(It.IsAny<Recipe_DTO>()), Times.Once);
         }
+
+        [Fact]
+        public async Task UpdateRecipeAsync()
+        {
+                // Arrange
+                Mock<IRecipe_SQL> recipeSQLMock = new Mock<IRecipe_SQL>();
+                recipeSQLMock
+                    .Setup(m => m.UpdateRecipe(It.IsAny<Recipe_DTO>()))
+                    .ReturnsAsync(1);
+    
+                RecipeController recipeController = SetUpRecipeController(recipeSQLMock);
+                Recipe testRecipe = CreateTestRecipe(3, 3);
+                // Act
+                IActionResult result = await recipeController.UpdateRecipe(testRecipe);
+                // Assert
+                Assert.IsType<OkObjectResult>(result);
+                Assert.Equal(testRecipe.ID, ((OkObjectResult)result).Value);
+                recipeSQLMock.Verify(m => m.UpdateRecipe(It.IsAny<Recipe_DTO>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateIngredient()
+        {
+            // Arrange
+            Mock<IRecipe_SQL> recipeSQLMock = new Mock<IRecipe_SQL>();
+            recipeSQLMock
+                .Setup(m => m.UpdateIngredient(It.IsAny<Ingredient_DTO>()))
+                .ReturnsAsync(1);
+    
+            RecipeController recipeController = SetUpRecipeController(recipeSQLMock);
+            Ingredient testIngredient = CreateTestIngredient(1);
+            // Act
+            IActionResult result = await recipeController.UpdateIngredient(testIngredient);
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(testIngredient.ID, ((OkObjectResult)result).Value);
+            recipeSQLMock.Verify(m => m.UpdateIngredient(It.IsAny<Ingredient_DTO>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateInstruction()
+        {
+            // Arrange
+            Mock<IRecipe_SQL> recipeSQLMock = new Mock<IRecipe_SQL>();
+            recipeSQLMock
+                .Setup(m => m.UpdateInstruction(It.IsAny<Instruction_DTO>()))
+                .ReturnsAsync(1);
+    
+            RecipeController recipeController = SetUpRecipeController(recipeSQLMock);
+            Instruction testInstruction = CreateTestInstruction(1);
+            // Act
+            IActionResult result = await recipeController.UpdateInstruction(testInstruction);
+            // Assert
+            Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(testInstruction.ID, ((OkObjectResult)result).Value);
+            recipeSQLMock.Verify(m => m.UpdateInstruction(It.IsAny<Instruction_DTO>()), Times.Once);
+        }
     }
 }
