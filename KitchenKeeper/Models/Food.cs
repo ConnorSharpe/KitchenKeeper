@@ -1,9 +1,7 @@
-﻿using KitchenKeeper.DAL.DTO;
-using System.Runtime.CompilerServices;
-
+﻿
 namespace KitchenKeeper.Classes
 {
-    public class FoodBase
+    public class Food
     {
         public int? ID { get; set; }
         public required string Name { get; set; }
@@ -16,11 +14,6 @@ namespace KitchenKeeper.Classes
         public FoodSubclass Subclass { get; set; }
         public bool IsCooked { get; set; }
         public bool IsVegetarian { get; set; }
-
-        public virtual DateOnly CalculateExpiration()
-        {
-            return DateAdded.AddDays(14);
-        }
     }
 
     public enum FoodClass
@@ -45,7 +38,8 @@ namespace KitchenKeeper.Classes
         Meat_Fish,
         Meat_Shellfish,
         Grain,
-        Meal,
+        Meal_Vegetarian,
+        Meal_Meat,
         Fruit_Berry,
         Fruit_Citrus,
         Fruit_StoneFruit,
@@ -61,7 +55,7 @@ namespace KitchenKeeper.Classes
 
     public enum StorageType
     {
-        Shelf,
+        Pantry,
         Refrigerator,
         Freezer
     }

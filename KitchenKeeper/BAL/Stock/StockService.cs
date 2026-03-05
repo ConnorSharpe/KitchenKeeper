@@ -2,6 +2,7 @@
 using KitchenKeeper.DAL.DTO;
 using KitchenKeeper.DAL.Stock_SQL;
 using KitchenKeeper.Models;
+using KitchenKeeper.BAL.ExpirationCalculator_BAL;
 
 namespace KitchenKeeper.BAL.Stock_BAL
 {
@@ -14,28 +15,33 @@ namespace KitchenKeeper.BAL.Stock_BAL
             _stock_SQL = stock_SQL;
         }
 
-        public async Task<int> AddFood(FoodBase food)
+        public async Task<int> AddFood(Food food)
         {
+            if (food.ExpirationDate == null)
+                food.ExpirationDate = ExpirationCalculator.Calculate(food.Subclass, food.Storage);
             Food_DTO food_DTO = Model_Mapper.ConvertFoodToDTO(food);
             return await _stock_SQL.AddFood(food_DTO);
         }
 
-        public async Task<FoodBase> GetFoodById(int id)
+        public async Task<Food> GetFoodById(int id)
         {
             Food_DTO? food_DTO = await _stock_SQL.GetFoodById(id);
             CheckDTOForNull(food_DTO);
             return Model_Mapper.ConvertDTOToFood(food_DTO);
         }
 
-        public async Task<IEnumerable<FoodBase>> SearchInventoryByName(string name)
+        public async Task<IEnumerable<Food>> SearchInventoryByName(string name)
         {
             IEnumerable<Food_DTO> foodDTOs = await _stock_SQL.SearchInventoryByName(name);
             return Model_Mapper.ConvertDTOListToFoodList(foodDTOs);
         }
 
-        public async Task<int> UpdateFood(FoodBase food)
+        public async Task<int> UpdateFood(Food food)
         {
             CheckIdForValue(food.ID);
+
+            if (food.ExpirationDate == null)
+                food.ExpirationDate = ExpirationCalculator.Calculate(food.Subclass, food.Storage);
 
             Food_DTO food_DTO = Model_Mapper.ConvertFoodToDTO(food);
             return await _stock_SQL.UpdateFood(food_DTO);

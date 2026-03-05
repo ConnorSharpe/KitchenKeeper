@@ -46,7 +46,7 @@ namespace KitchenKeeper.Controllers
         }
 
         [HttpPost(Name = "AddFood")]
-        public async Task<IActionResult> AddFood(FoodBase food)
+        public async Task<IActionResult> AddFood(Food food)
         {
             try
             {
@@ -61,7 +61,7 @@ namespace KitchenKeeper.Controllers
         }
 
         [HttpPut(Name = "UpdateFood")]
-        public async Task<IActionResult> UpdateFood(FoodBase food)
+        public async Task<IActionResult> UpdateFood(Food food)
         {
             try
             {

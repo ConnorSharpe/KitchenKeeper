@@ -1,6 +1,4 @@
-﻿using Azure.Identity;
-using KitchenKeeper.BAL.ShoppingListRefinement_BAL;
-using KitchenKeeper.BAL.Stock_BAL;
+﻿using KitchenKeeper.BAL.ShoppingListRefinement_BAL;
 using KitchenKeeper.Classes;
 using KitchenKeeper.Controllers;
 using KitchenKeeper.DAL.DTO;
@@ -8,11 +6,7 @@ using KitchenKeeper.DAL.Stock_SQL;
 using KitchenKeeper.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
-using static System.Collections.Specialized.BitVector32;
 
 namespace KitchenKeeper.UnitTests
 {
@@ -21,17 +15,18 @@ namespace KitchenKeeper.UnitTests
         private static DateOnly today = DateOnly.FromDateTime(DateTime.Now);
         private static DateOnly twoWeeksFromNow = today.AddDays(14);
 
-        private FoodBase CreateTestFoodBase()
+        private Food CreateTestFoodBase()
         {
-            return new FoodBase()
+            return new Food()
             {
                 Name = "Test Food",
                 DateAdded = today,
                 ExpirationDate = twoWeeksFromNow,
-                Storage = StorageType.Shelf,
+                Storage = StorageType.Refrigerator,
                 Quantity = 1,
                 UnitOfMeasurement = QuantityType.count,
-                Class = FoodClass.Meat,
+                Class = FoodClass.Meal,
+                Subclass = FoodSubclass.Meal_Meat,
                 IsCooked = false,
                 IsVegetarian = false
             };
@@ -44,11 +39,11 @@ namespace KitchenKeeper.UnitTests
                 Name = name,
                 DateAdded = today,
                 ExpirationDate = twoWeeksFromNow,
-                Storage = StorageType.Shelf.ToString(),
+                Storage = StorageType.Refrigerator.ToString(),
                 Quantity = quantity,
                 UnitOfMeasurement = QuantityType.count.ToString(),
                 Class = FoodClass.Meal.ToString(),
-                Subclass = FoodSubclass.Meal.ToString(),
+                Subclass = FoodSubclass.Meal_Meat.ToString(),
                 IsCooked = true,
                 IsVegetarian = true
             };

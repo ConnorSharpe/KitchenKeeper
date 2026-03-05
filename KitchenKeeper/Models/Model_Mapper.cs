@@ -6,7 +6,7 @@ namespace KitchenKeeper.Models
 {
     public class Model_Mapper
     {
-        public static IEnumerable<Food_DTO> ConvertFoodListToDTOList(IEnumerable<FoodBase> foodList)
+        public static IEnumerable<Food_DTO> ConvertFoodListToDTOList(IEnumerable<Food> foodList)
         {
             List<Food_DTO> dtoList = new List<Food_DTO>();
             foreach (var food in foodList)
@@ -16,7 +16,7 @@ namespace KitchenKeeper.Models
             return dtoList;
         }
 
-        public static Food_DTO ConvertFoodToDTO(FoodBase food)
+        public static Food_DTO ConvertFoodToDTO(Food food)
         {
 
             Food_DTO food_DTO = new Food_DTO
@@ -24,7 +24,7 @@ namespace KitchenKeeper.Models
                 ID = food.ID,
                 Name = food.Name,
                 DateAdded = food.DateAdded,
-                ExpirationDate = CalculateExpirationIfNull(food.ExpirationDate, food.DateAdded, food.Storage),
+                ExpirationDate = (DateOnly)food.ExpirationDate,
                 Storage = food.Storage.ToString(),
                 Quantity = food.Quantity,
                 UnitOfMeasurement = food.UnitOfMeasurement.ToString(),
@@ -37,17 +37,9 @@ namespace KitchenKeeper.Models
             return food_DTO;
         }
 
-        private static DateOnly CalculateExpirationIfNull(DateOnly? expirationDate, DateOnly dateAdded, StorageType storageType)
+        public static IEnumerable<Food> ConvertDTOListToFoodList(IEnumerable<Food_DTO> dtoList)
         {
-            if (expirationDate.HasValue)
-                return (DateOnly)expirationDate;
-            else
-                return ExpirationCalculator.SetDate(dateAdded, storageType);
-        }
-
-        public static IEnumerable<FoodBase> ConvertDTOListToFoodList(IEnumerable<Food_DTO> dtoList)
-        {
-            List<FoodBase> foodList = new List<FoodBase>();
+            List<Food> foodList = new List<Food>();
             foreach (var dto in dtoList)
             {
                 foodList.Add(ConvertDTOToFood(dto));
@@ -55,9 +47,9 @@ namespace KitchenKeeper.Models
             return foodList;
         }
 
-        public static FoodBase ConvertDTOToFood(Food_DTO food_DTO)
+        public static Food ConvertDTOToFood(Food_DTO food_DTO)
         {
-            FoodBase food = new FoodBase
+            Food food = new Food
             {
                 ID = food_DTO.ID,
                 Name = food_DTO.Name,

@@ -2,7 +2,6 @@
 using KitchenKeeper.DAL.DTO;
 using KitchenKeeper.DAL.Recipe_SQL;
 using KitchenKeeper.Models;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 namespace KitchenKeeper.BAL.RecipeManager
 {
