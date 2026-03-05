@@ -4,9 +4,6 @@ using KitchenKeeper.Controllers;
 using KitchenKeeper.DAL.DTO;
 using KitchenKeeper.DAL.Stock_SQL;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace KitchenKeeper.UnitTests
 {
@@ -21,14 +18,14 @@ namespace KitchenKeeper.UnitTests
         }
 
 
-        public FoodBase CreateTestFoodBase()
+        public Food CreateTestFoodBase()
         {
-            return new FoodBase()
+            return new Food()
             {
                 Name = "Test Food",
                 DateAdded = today,
                 ExpirationDate = twoWeeksFromNow,
-                Storage = StorageType.Shelf,
+                Storage = StorageType.Pantry,
                 Quantity = 1,
                 UnitOfMeasurement = QuantityType.count,
                 Class = FoodClass.Meat,
@@ -45,11 +42,11 @@ namespace KitchenKeeper.UnitTests
                 Name = "Test Food",
                 DateAdded = today,
                 ExpirationDate = twoWeeksFromNow,
-                Storage = StorageType.Shelf.ToString(),
+                Storage = StorageType.Pantry.ToString(),
                 Quantity = 1,
                 UnitOfMeasurement = QuantityType.count.ToString(),
                 Class = FoodClass.Meal.ToString(),
-                Subclass = FoodSubclass.Meal.ToString(),
+                Subclass = FoodSubclass.Meal_Meat.ToString(),
                 IsCooked = true,
                 IsVegetarian = true
             };

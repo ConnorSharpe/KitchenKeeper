@@ -3,7 +3,6 @@ using KitchenKeeper.DAL.DTO;
 using KitchenKeeper.DAL.Stock_SQL;
 using KitchenKeeper.Models;
 using System.Data;
-using System.Linq;
 
 namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
 {
@@ -18,23 +17,22 @@ namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
 
         public async Task<ShoppingList> GenerateShoppingListFromRecipe(Recipe recipe)
         {
-            List<FoodBase> foodsInStock = await GetFoodByIngredients(recipe.Ingredients);
+            List<Food> foodsInStock = await GetFoodByIngredients(recipe.Ingredients);
             //find out which ingredients are missing from the recipe and add them to the ingredients to buy
             ShoppingList shoppingList = new ShoppingList()
             {
                 IngredientsInStock = foodsInStock,
-                IngredientsToBuy = recipe.Ingredients,
-                IsReadyToCook = false
+                IngredientsToBuy = recipe.Ingredients
             };
             FilterIngredientsNotInStock(shoppingList);
             return shoppingList;
         }
 
-        private async Task<List<FoodBase>> GetFoodByIngredients(List<Ingredient> ingredients)
+        private async Task<List<Food>> GetFoodByIngredients(List<Ingredient> ingredients)
         {
             DataTable ingredientNameDT = GenerateDataTableFromIngredientNames(ingredients);
             IEnumerable<Food_DTO> unrefinedFoods = await _stock_SQL.GetFoodByIngredientNameDT(ingredientNameDT);
-            List<FoodBase> unrefinedFoodList = Model_Mapper.ConvertDTOListToFoodList(unrefinedFoods).ToList();
+            List<Food> unrefinedFoodList = Model_Mapper.ConvertDTOListToFoodList(unrefinedFoods).ToList();
             return RefineFoodInStock(unrefinedFoodList);
         }
 
@@ -89,14 +87,15 @@ namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
                 }
             }
 
-            shoppingList.IsReadyToCook = (shoppingList.IngredientsToBuy?.Count ?? 0) == 0;
+            // IsReadyToCook is a computed property on ShoppingList and will reflect
+            // whether there are any IngredientsToBuy remaining.
         }
 
-        private List<FoodBase> RefineFoodInStock(List<FoodBase> unrefinedFoodsInStock)
+        private List<Food> RefineFoodInStock(List<Food> unrefinedFoodsInStock)
         {
             //find duplicates and add them together, keeping the old expiration date if they are the same food, and the new expiration date if they are different foods.
             //extract distinct and add to refined foods 
-            List<FoodBase> refinedFoodsInStock = ExtractDistinctFoodToList(unrefinedFoodsInStock);
+            List<Food> refinedFoodsInStock = ExtractDistinctFoodToList(unrefinedFoodsInStock);
             //remove foods from original list if they are in the refined list,
             foreach (var food in refinedFoodsInStock)
             {
@@ -114,7 +113,7 @@ namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
 
         }
 
-        private List<FoodBase> ExtractDistinctFoodToList(List<FoodBase> unrefinedFoodsInStock)
+        private List<Food> ExtractDistinctFoodToList(List<Food> unrefinedFoodsInStock)
         {
             // Return only those foods whose names appear exactly once (case-insensitive)
             var distinctOnly = unrefinedFoodsInStock
@@ -127,7 +126,7 @@ namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
         }
 
 
-        private static void CombineDuplicateFood(List<FoodBase> foods)
+        private static void CombineDuplicateFood(List<Food> foods)
         {
             var groups = GroupFoodsByName(foods);
 
@@ -156,7 +155,7 @@ namespace KitchenKeeper.BAL.ShoppingListRefinement_BAL
             }
         }
 
-        private static List<IGrouping<string, FoodBase>> GroupFoodsByName(List<FoodBase> foods)
+        private static List<IGrouping<string, Food>> GroupFoodsByName(List<Food> foods)
         {
             return foods
                 .GroupBy(f => f.Name, StringComparer.OrdinalIgnoreCase)

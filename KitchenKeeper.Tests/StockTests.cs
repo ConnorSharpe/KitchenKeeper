@@ -1,4 +1,5 @@
-﻿using KitchenKeeper.BAL.Stock_BAL;
+﻿using KitchenKeeper.BAL.ExpirationCalculator_BAL;
+using KitchenKeeper.BAL.Stock_BAL;
 using KitchenKeeper.Classes;
 using KitchenKeeper.Controllers;
 using KitchenKeeper.DAL.DTO;
@@ -6,8 +7,6 @@ using KitchenKeeper.DAL.Stock_SQL;
 using KitchenKeeper.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System.Data;
-using System.Data.Common;
 
 namespace KitchenKeeper.UnitTests
 {
@@ -24,17 +23,18 @@ namespace KitchenKeeper.UnitTests
         }
 
 
-        private FoodBase CreateTestFoodBase()
+        private Food CreateTestFoodBase()
         {
-            return new FoodBase()
+            return new Food()
             {
                 Name = "Test Food",
                 DateAdded = today,
-                ExpirationDate = twoWeeksFromNow,
-                Storage = StorageType.Shelf,
+                ExpirationDate = null,
+                Storage = StorageType.Refrigerator,
                 Quantity = 1,
                 UnitOfMeasurement = QuantityType.count,
-                Class = FoodClass.Meat,
+                Class = FoodClass.Meal,
+                Subclass = FoodSubclass.Meal_Meat,
                 IsCooked = false,
                 IsVegetarian = false
             };
@@ -47,12 +47,12 @@ namespace KitchenKeeper.UnitTests
                 ID = 1,
                 Name = "Test Food",
                 DateAdded = today,
-                ExpirationDate = twoWeeksFromNow,
-                Storage = StorageType.Shelf.ToString(),
+                ExpirationDate = ExpirationCalculator.Calculate(FoodSubclass.Meal_Meat, StorageType.Refrigerator),
+                Storage = StorageType.Pantry.ToString(),
                 Quantity = 1,
                 UnitOfMeasurement = QuantityType.count.ToString(),
                 Class = FoodClass.Meal.ToString(),
-                Subclass = FoodSubclass.Meal.ToString(),
+                Subclass = FoodSubclass.Meal_Meat.ToString(),
                 IsCooked = true,
                 IsVegetarian = true
             };
@@ -63,29 +63,6 @@ namespace KitchenKeeper.UnitTests
         #endregion
 
         #region Model Tests
-
-        [Fact]
-        public void ConvertFoodBaseToDTOExpirationDateIsNotNull()
-        {
-            // Arrange
-            FoodBase testFood = CreateTestFoodBase();
-            testFood.ExpirationDate = null;
-
-            // Expected expiration when null should be calculated from DateAdded
-            DateOnly expectedExpiration = ExpirationCalculator.SetDate(testFood.DateAdded, testFood.Storage);
-
-            // Act
-            var testFoodDTO = Model_Mapper.ConvertFoodToDTO(testFood);
-
-            // Assert
-            Assert.NotNull(testFoodDTO);
-            Assert.Equal(testFood.Name, testFoodDTO.Name);
-            Assert.Equal(testFood.DateAdded, testFoodDTO.DateAdded);
-            Assert.Equal(expectedExpiration, testFoodDTO.ExpirationDate);
-            Assert.Equal(testFood.Storage.ToString(), testFoodDTO.Storage);
-            Assert.Equal(testFood.Quantity, testFoodDTO.Quantity);
-            Assert.Equal(testFood.UnitOfMeasurement.ToString(), testFoodDTO.UnitOfMeasurement);
-        }
 
         [Fact]
         public void ShoppingListIsReadyToCookWhenIngredientsToBuyIsEmpty()
@@ -106,7 +83,7 @@ namespace KitchenKeeper.UnitTests
         {
 
             // Arrange
-            FoodBase testFood = CreateTestFoodBase();
+            Food testFood = CreateTestFoodBase();
             var stockSqlMock = new Mock<IStock_SQL>();
             stockSqlMock
                 .Setup(s => s.AddFood(It.IsAny<Food_DTO>()))
@@ -123,6 +100,43 @@ namespace KitchenKeeper.UnitTests
 
             // Optional: verify the SQL method was called once
             stockSqlMock.Verify(s => s.AddFood(It.IsAny<Food_DTO>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task AddedFoodExpirationDateIsNotNull()
+        {
+            // Arrange
+            Food testFood = CreateTestFoodBase();
+            DateOnly? expectedDate = ExpirationCalculator.Calculate(testFood.Subclass, testFood.Storage);
+            testFood.ExpirationDate = null; // Ensure ExpirationDate is null to test if it's set in the service
+            Food_DTO? captured = null;
+            var stockSqlMock = new Mock<IStock_SQL>();
+
+            stockSqlMock
+                .Setup(s => s.AddFood(It.IsAny<Food_DTO>()))
+                .Callback<Food_DTO>(dto => captured = dto)
+                .ReturnsAsync(1);
+
+            var stockController = SetUpStockController(stockSqlMock);
+
+
+            await stockController.AddFood(testFood);
+
+            Assert.NotNull(captured);
+            Assert.Equal(expectedDate, captured.ExpirationDate); // or Assert.True(captured.ExpirationDate.HasValue)
+        }
+
+        [Fact]
+        public async Task AddFoodThrowsErrorIfExpirationIsNullAndCannotBeCalculated()
+        {
+            // Arrange
+            Food testFood = CreateTestFoodBase();
+            testFood.ExpirationDate = null; // Ensure ExpirationDate is null to test if it's set in the service
+            testFood.Storage = StorageType.Pantry;
+            var stockSqlMock = new Mock<IStock_SQL>();
+            var stockController = SetUpStockController(stockSqlMock);
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => stockController.AddFood(testFood));
         }
         #endregion
 
@@ -178,7 +192,7 @@ namespace KitchenKeeper.UnitTests
         public async Task UpdateFoodAsync()
         {
             // Arrange
-            FoodBase testFood = CreateTestFoodBase();
+            Food testFood = CreateTestFoodBase();
             testFood.ID = 123;
 
             var stockSqlMock = new Mock<IStock_SQL>();
@@ -199,7 +213,7 @@ namespace KitchenKeeper.UnitTests
         public async Task UpdateFoodThrowsErrorIfIdIsNullOrZero()
         {
             // Arrange
-            FoodBase testFood = CreateTestFoodBase();
+            Food testFood = CreateTestFoodBase();
             testFood.ID = 0; // Invalid ID
             var stockSqlMock = new Mock<IStock_SQL>();
             var stockController = SetUpStockController(stockSqlMock);
@@ -207,6 +221,46 @@ namespace KitchenKeeper.UnitTests
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => stockController.UpdateFood(testFood));
             testFood.ID = 0; // Invalid ID
+            await Assert.ThrowsAsync<Exception>(() => stockController.UpdateFood(testFood));
+        }
+
+        [Fact]
+        public async Task UpdatedFoodExpirationDateIsNotNull()
+        {
+            // Arrange
+            Food testFood = CreateTestFoodBase();
+            testFood.ID = 123;
+            testFood.ExpirationDate = null; // Ensure ExpirationDate is null to test if it's set in the service
+
+            DateOnly? expectedDate = ExpirationCalculator.Calculate(testFood.Subclass, testFood.Storage);
+            Food_DTO? captured = null;
+            var stockSqlMock = new Mock<IStock_SQL>();
+
+            stockSqlMock
+                .Setup(s => s.UpdateFood(It.IsAny<Food_DTO>()))
+                .Callback<Food_DTO>(dto => captured = dto)
+                .ReturnsAsync(1);
+
+            var stockController = SetUpStockController(stockSqlMock);
+
+
+            await stockController.UpdateFood(testFood);
+
+            Assert.NotNull(captured);
+            Assert.Equal(expectedDate, captured.ExpirationDate); // or Assert.True(captured.ExpirationDate.HasValue)
+        }
+
+        [Fact]
+        public async Task UpdateFoodThrowsErrorIfExpirationIsNullAndCannotBeCalculated()
+        {
+            // Arrange
+            Food testFood = CreateTestFoodBase();
+            testFood.ID = 123;
+            testFood.ExpirationDate = null; // Ensure ExpirationDate is null to test if it's set in the service
+            testFood.Storage = StorageType.Pantry;
+            var stockSqlMock = new Mock<IStock_SQL>();
+            var stockController = SetUpStockController(stockSqlMock);
+            // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => stockController.UpdateFood(testFood));
         }
 
